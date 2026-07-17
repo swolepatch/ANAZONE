@@ -8,9 +8,11 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { useBudgetStore } from '@/store/budgetStore';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useEquipmentStore } from '@/store/equipmentStore';
+import { useIncidentStore } from '@/store/incidentStore';
 import { useMilestoneStore } from '@/store/milestoneStore';
+import { useShiftStore } from '@/store/shiftStore';
 import { formatCurrency } from '@/utils/currency';
-import { daysUntil, formatDateLong } from '@/utils/date';
+import { daysUntil, formatDateLong, todayIso } from '@/utils/date';
 
 function countdownLabel(days: number): string {
   if (days === 0) return 'Today';
@@ -25,6 +27,8 @@ export default function HomeScreen() {
   const equipmentItems = useEquipmentStore((s) => s.items);
   const budgetItems = useBudgetStore((s) => s.items);
   const milestoneItems = useMilestoneStore((s) => s.items);
+  const shiftItems = useShiftStore((s) => s.items);
+  const incidentItems = useIncidentStore((s) => s.items);
 
   const completion = useMemo(() => {
     if (checklistItems.length === 0) return { done: 0, total: 0, pct: 0 };
@@ -44,6 +48,16 @@ export default function HomeScreen() {
     [equipmentItems]
   );
   const totalBudget = useMemo(() => budgetItems.reduce((sum, i) => sum + i.amount, 0), [budgetItems]);
+
+  const todaysShiftCount = useMemo(() => {
+    const today = todayIso();
+    return shiftItems.filter((s) => s.date === today).length;
+  }, [shiftItems]);
+
+  const openIncidentCount = useMemo(
+    () => incidentItems.filter((i) => !i.resolved).length,
+    [incidentItems]
+  );
 
   return (
     <View className="flex-1 bg-bg">
@@ -82,6 +96,21 @@ export default function HomeScreen() {
               <EmptyState label="No upcoming milestones" />
             )}
           </Card>
+
+          <View className="flex-row gap-4">
+            <Card className="flex-1">
+              <Text className="font-mono text-[10px] uppercase tracking-widest text-muted mb-3">
+                Today's Shifts
+              </Text>
+              <Text className="font-heading text-ink text-2xl">{todaysShiftCount}</Text>
+            </Card>
+            <Card className="flex-1">
+              <Text className="font-mono text-[10px] uppercase tracking-widest text-muted mb-3">
+                Open Incidents
+              </Text>
+              <Text className="font-heading text-ink text-2xl">{openIncidentCount}</Text>
+            </Card>
+          </View>
 
           <View className="flex-row gap-4">
             <Card className="flex-1">

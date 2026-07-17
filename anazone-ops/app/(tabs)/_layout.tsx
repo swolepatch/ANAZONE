@@ -51,31 +51,24 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="tasks"
+        name="pre-launch"
         options={{
-          title: 'Tasks',
-          tabBarIcon: ({ focused }) => <TabIcon name="checkbox-outline" focused={focused} />,
+          title: 'Pre-Launch',
+          tabBarIcon: ({ focused }) => <TabIcon name="rocket-outline" focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="equipment"
+        name="staff-ops"
         options={{
-          title: 'Equipment',
-          tabBarIcon: ({ focused }) => <TabIcon name="barbell-outline" focused={focused} />,
+          title: 'Staff Ops',
+          tabBarIcon: ({ focused }) => <TabIcon name="people-outline" focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="budget"
+        name="facility"
         options={{
-          title: 'Budget',
-          tabBarIcon: ({ focused }) => <TabIcon name="wallet-outline" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="calendar"
-        options={{
-          title: 'Calendar',
-          tabBarIcon: ({ focused }) => <TabIcon name="calendar-outline" focused={focused} />,
+          title: 'Facility',
+          tabBarIcon: ({ focused }) => <TabIcon name="construct-outline" focused={focused} />,
         }}
       />
     </Tabs>

@@ -27,6 +27,26 @@ const CATEGORY_COLORS: Record<string, string> = {
   Misc: colors.muted,
   Reserve: colors.muted,
   Buildout: colors.amber,
+  // staff roles
+  Coach: colors.violet,
+  Trainer: colors.cyan,
+  'Front Desk': colors.mint,
+  Manager: colors.pink,
+  Cleaner: colors.amber,
+  // incident severity
+  low: colors.mint,
+  medium: colors.amber,
+  high: colors.pink,
+  // maintenance status
+  open: colors.pink,
+  'in-progress': colors.amber,
+  resolved: colors.cyan,
+  // cleaning frequency
+  daily: colors.cyan,
+  weekly: colors.violet,
+  // feed post type
+  announcement: colors.cyan,
+  handoff: colors.violet,
 };
 
 export function categoryColor(category: string): string {

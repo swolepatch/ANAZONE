@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import type { StateStorage } from 'zustand/middleware';
 
 // SecureStore enforces a ~2048 byte ceiling per value on Android, and lists
@@ -11,7 +12,7 @@ async function chunkCount(key: string): Promise<number> {
   return raw ? Number(raw) : 0;
 }
 
-export const secureJsonStorage: StateStorage = {
+const nativeSecureStorage: StateStorage = {
   getItem: async (key) => {
     const count = await chunkCount(key);
     if (count === 0) return null;
@@ -41,3 +42,18 @@ export const secureJsonStorage: StateStorage = {
     await SecureStore.deleteItemAsync(`${key}__meta`);
   },
 };
+
+// The Keychain/Keystore that SecureStore wraps has no browser equivalent —
+// expo-secure-store's web platform file is a stub, so every call rejects
+// there. localStorage is the standard fallback for web-only persistence.
+const webLocalStorage: StateStorage = {
+  getItem: async (key) => globalThis.localStorage?.getItem(key) ?? null,
+  setItem: async (key, value) => {
+    globalThis.localStorage?.setItem(key, value);
+  },
+  removeItem: async (key) => {
+    globalThis.localStorage?.removeItem(key);
+  },
+};
+
+export const secureJsonStorage: StateStorage = Platform.OS === 'web' ? webLocalStorage : nativeSecureStorage;

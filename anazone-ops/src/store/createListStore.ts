@@ -11,6 +11,7 @@ export interface ListState<T extends WithId> {
   hasHydrated: boolean;
   addItem: (item: T) => void;
   removeItem: (id: string) => void;
+  updateItem: (id: string, patch: Partial<T>) => void;
 }
 
 // Screens only ever talk to the store hook returned here (items + actions).
@@ -24,6 +25,10 @@ export function createListStore<T extends WithId>(key: string, seed: () => T[]) 
         hasHydrated: false,
         addItem: (item) => set((state) => ({ items: [...state.items, item] })),
         removeItem: (id) => set((state) => ({ items: state.items.filter((i) => i.id !== id) })),
+        updateItem: (id, patch) =>
+          set((state) => ({
+            items: state.items.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+          })),
       }),
       {
         name: key,

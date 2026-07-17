@@ -1,5 +1,18 @@
+import { addDays, todayIso } from '@/utils/date';
 import { generateId } from '@/utils/id';
-import type { BudgetItem, ChecklistItem, EquipmentItem, Milestone } from './types';
+import type {
+  BudgetItem,
+  ChecklistItem,
+  CleaningTask,
+  DailyTaskCompletion,
+  DailyTaskTemplate,
+  EquipmentItem,
+  FeedPost,
+  IncidentReport,
+  MaintenanceEntry,
+  Milestone,
+  Shift,
+} from './types';
 
 export function seedChecklist(): ChecklistItem[] {
   const rows: Array<[ChecklistItem['category'], string, boolean]> = [
@@ -85,4 +98,169 @@ export function seedMilestones(): Milestone[] {
     ['2026-12-01', 'Marketing', 'Grand opening event'],
   ];
   return rows.map(([date, category, title]) => ({ id: generateId(), date, category, title }));
+}
+
+export function seedShifts(): Shift[] {
+  const today = todayIso();
+  const rows: Array<[string, Shift['role'], string, string, string]> = [
+    ['Jess Tremblay', 'Manager', today, '06:00', '14:00'],
+    ['Marc-André Bissonnette', 'Coach', today, '07:00', '15:00'],
+    ['Sofia Nguyen', 'Front Desk', today, '14:00', '22:00'],
+    ['Liam Fortin', 'Trainer', addDays(today, 1), '06:00', '14:00'],
+    ['Priya Chandra', 'Cleaner', addDays(today, 1), '05:00', '09:00'],
+    ['Jess Tremblay', 'Manager', addDays(today, 2), '06:00', '14:00'],
+  ];
+  return rows.map(([staffName, role, date, startTime, endTime]) => ({
+    id: generateId(),
+    staffName,
+    role,
+    date,
+    startTime,
+    endTime,
+  }));
+}
+
+export function seedDailyTaskTemplates(): DailyTaskTemplate[] {
+  const rows: Array<[DailyTaskTemplate['checklistType'], string, number]> = [
+    ['opening', 'Unlock doors & disable alarm', 1],
+    ['opening', 'Turn on lights & sound system', 2],
+    ['opening', 'Check HVAC and thermostat settings', 3],
+    ['opening', 'Wipe down equipment from overnight', 4],
+    ['closing', 'Lock all doors & windows', 1],
+    ['closing', 'Re-rack weights & tidy floor', 2],
+    ['closing', 'Turn off lights & sound system', 3],
+    ['closing', 'Set alarm & submit closing report', 4],
+  ];
+  return rows.map(([checklistType, text, order]) => ({ id: generateId(), checklistType, text, order }));
+}
+
+export function seedDailyTaskCompletions(): DailyTaskCompletion[] {
+  return [];
+}
+
+export function seedIncidents(): IncidentReport[] {
+  const today = todayIso();
+  const rows: Array<[string, string, string, IncidentReport['severity'], string, string, boolean]> = [
+    [
+      'Torn cable on lat pulldown',
+      'Cable frayed near the pulley, unsafe under load.',
+      'Strength Floor',
+      'high',
+      'Marc-André Bissonnette',
+      addDays(today, -2),
+      false,
+    ],
+    [
+      'Slippery floor near water fountain',
+      'Condensation pooling, minor slip risk.',
+      'Front Lobby',
+      'medium',
+      'Sofia Nguyen',
+      addDays(today, -1),
+      false,
+    ],
+    [
+      'Locker room hook broken',
+      'One coat hook snapped off in the locker room.',
+      'Locker Room',
+      'low',
+      'Priya Chandra',
+      addDays(today, -5),
+      true,
+    ],
+    [
+      'Member slipped on turf',
+      'Minor fall during sled push, no injury reported.',
+      'Turf Strip',
+      'medium',
+      'Jess Tremblay',
+      addDays(today, -7),
+      true,
+    ],
+  ];
+  return rows.map(([title, description, location, severity, reportedBy, date, resolved]) => ({
+    id: generateId(),
+    title,
+    description,
+    location,
+    severity,
+    reportedBy,
+    date,
+    resolved,
+  }));
+}
+
+export function seedFeedPosts(): FeedPost[] {
+  const today = todayIso();
+  const rows: Array<[FeedPost['type'], string, string, string]> = [
+    [
+      'announcement',
+      'Jess Tremblay',
+      'New assault bikes arrive Thursday — please clear space near the cardio wall.',
+      addDays(today, -3),
+    ],
+    [
+      'handoff',
+      'Sofia Nguyen',
+      'Ran out of paper towels at the front desk, restock ordered for tomorrow.',
+      addDays(today, -1),
+    ],
+    [
+      'announcement',
+      'Jess Tremblay',
+      'Founding member pre-sale opens next week — expect extra tour requests.',
+      addDays(today, -1),
+    ],
+    [
+      'handoff',
+      'Marc-André Bissonnette',
+      'Torn cable on lat pulldown is flagged out of service, do not let members use it.',
+      today,
+    ],
+  ];
+  return rows.map(([type, author, message, date]) => ({ id: generateId(), type, author, message, date }));
+}
+
+export function seedMaintenance(): MaintenanceEntry[] {
+  const today = todayIso();
+  const rows: Array<[string, string, string, string | null, MaintenanceEntry['status'], string]> = [
+    ['Lat Pulldown Cable', 'Cable frayed near the pulley', addDays(today, -2), null, 'open', 'Parts on order from Rogue Fitness.'],
+    ['RowErg #3', 'Monitor flickering intermittently', addDays(today, -6), null, 'in-progress', 'Concept2 support ticket open.'],
+    [
+      'HVAC Unit',
+      'Annual inspection & filter change',
+      addDays(today, -20),
+      addDays(today, -18),
+      'resolved',
+      'Serviced by Climatisation MTL.',
+    ],
+    ['Door Access Reader', 'Front door reader unresponsive to fobs', addDays(today, -1), null, 'open', 'Brivo support contacted.'],
+  ];
+  return rows.map(([equipmentName, issue, dateReported, dateServiced, status, notes]) => ({
+    id: generateId(),
+    equipmentName,
+    issue,
+    dateReported,
+    dateServiced,
+    status,
+    notes,
+  }));
+}
+
+export function seedCleaningTasks(): CleaningTask[] {
+  const today = todayIso();
+  const rows: Array<[string, CleaningTask['frequency'], string, string | null]> = [
+    ['Cardio Equipment Wipe-down', 'daily', 'Priya Chandra', today],
+    ['Locker Rooms & Showers', 'daily', 'Priya Chandra', addDays(today, -1)],
+    ['Strength Floor & Mats', 'daily', 'Sofia Nguyen', addDays(today, -1)],
+    ['Deep Clean Turf Strip', 'weekly', 'Priya Chandra', addDays(today, -6)],
+    ['Windows & Front Entrance Glass', 'weekly', 'Sofia Nguyen', null],
+  ];
+  return rows.map(([area, frequency, assignedTo, lastCompleted]) => ({
+    id: generateId(),
+    area,
+    frequency,
+    assignedTo,
+    lastCompleted,
+  }));
 }
