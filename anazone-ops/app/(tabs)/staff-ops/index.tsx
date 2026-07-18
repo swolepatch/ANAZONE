@@ -34,6 +34,12 @@ export default function StaffOpsHub() {
             subtitle="Announcements & shift handoffs"
             onPress={() => router.push('/staff-ops/feed')}
           />
+          <HubCard
+            icon="chatbox-ellipses-outline"
+            title="Messages"
+            subtitle="Team chat & direct messages"
+            onPress={() => router.push('/staff-ops/messages')}
+          />
         </View>
       </ScrollView>
     </View>

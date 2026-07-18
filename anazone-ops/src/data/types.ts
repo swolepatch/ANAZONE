@@ -110,7 +110,7 @@ export interface IncidentReport {
   description: string;
   location: string;
   severity: IncidentSeverity;
-  reportedBy: string;
+  reportedById: string;
   date: string;
   resolved: boolean;
 }
@@ -148,4 +148,62 @@ export interface CleaningTask {
   frequency: CleaningFrequency;
   assignedTo: string;
   lastCompleted: string | null;
+}
+
+// ---- Supabase-backed domain types (Parts 1-4) ----
+
+export const CONVERSATION_TYPES = ['group', 'dm'] as const;
+export type ConversationType = (typeof CONVERSATION_TYPES)[number];
+
+export interface Conversation {
+  id: string;
+  type: ConversationType;
+  name: string | null;
+  created_at: string;
+}
+
+export interface ConversationParticipant {
+  conversation_id: string;
+  staff_id: string;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  text: string;
+  created_at: string;
+}
+
+export interface MessageRead {
+  message_id: string;
+  staff_id: string;
+  read_at: string;
+}
+
+export interface ConversationSummary {
+  id: string;
+  type: ConversationType;
+  name: string | null;
+  otherParticipant: { id: string; name: string; avatar_url: string | null } | null;
+  lastMessage: { text: string; created_at: string; sender_id: string } | null;
+  unread: boolean;
+}
+
+export interface SupabaseShift {
+  id: string;
+  staff_id: string;
+  role: StaffRole;
+  date: string;
+  start_time: string;
+  end_time: string;
+  created_at: string;
+}
+
+export interface SupabaseFeedPost {
+  id: string;
+  type: FeedPostType;
+  author_id: string;
+  message: string;
+  created_at: string;
 }

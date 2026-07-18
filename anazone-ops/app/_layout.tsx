@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useAuthStore } from '@/store/authStore';
 import { useAppHydrated } from '@/store/useAppHydrated';
 import { colors } from '@/theme/colors';
 
@@ -26,7 +27,9 @@ export default function RootLayout() {
     IBMPlexMono_600SemiBold,
   });
   const dataHydrated = useAppHydrated();
-  const ready = fontsLoaded && dataHydrated;
+  const authInitializing = useAuthStore((s) => s.initializing);
+  const session = useAuthStore((s) => s.session);
+  const ready = fontsLoaded && dataHydrated && !authInitializing;
 
   useEffect(() => {
     if (ready) {
@@ -43,7 +46,12 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-          <Stack.Screen name="(tabs)" />
+          <Stack.Protected guard={!!session}>
+            <Stack.Screen name="(tabs)" />
+          </Stack.Protected>
+          <Stack.Protected guard={!session}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

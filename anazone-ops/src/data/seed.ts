@@ -140,13 +140,15 @@ export function seedDailyTaskCompletions(): DailyTaskCompletion[] {
 
 export function seedIncidents(): IncidentReport[] {
   const today = todayIso();
-  const rows: Array<[string, string, string, IncidentReport['severity'], string, string, boolean]> = [
+  // reportedById points at whichever staff account files the report; seed rows predate any
+  // real signup, so these are placeholder ids that simply won't resolve in the staff directory
+  // (the UI falls back to "Unknown" for those, same as it would for a since-removed staff member).
+  const rows: Array<[string, string, string, IncidentReport['severity'], string, boolean]> = [
     [
       'Torn cable on lat pulldown',
       'Cable frayed near the pulley, unsafe under load.',
       'Strength Floor',
       'high',
-      'Marc-André Bissonnette',
       addDays(today, -2),
       false,
     ],
@@ -155,7 +157,6 @@ export function seedIncidents(): IncidentReport[] {
       'Condensation pooling, minor slip risk.',
       'Front Lobby',
       'medium',
-      'Sofia Nguyen',
       addDays(today, -1),
       false,
     ],
@@ -164,7 +165,6 @@ export function seedIncidents(): IncidentReport[] {
       'One coat hook snapped off in the locker room.',
       'Locker Room',
       'low',
-      'Priya Chandra',
       addDays(today, -5),
       true,
     ],
@@ -173,18 +173,17 @@ export function seedIncidents(): IncidentReport[] {
       'Minor fall during sled push, no injury reported.',
       'Turf Strip',
       'medium',
-      'Jess Tremblay',
       addDays(today, -7),
       true,
     ],
   ];
-  return rows.map(([title, description, location, severity, reportedBy, date, resolved]) => ({
+  return rows.map(([title, description, location, severity, date, resolved]) => ({
     id: generateId(),
     title,
     description,
     location,
     severity,
-    reportedBy,
+    reportedById: generateId(),
     date,
     resolved,
   }));

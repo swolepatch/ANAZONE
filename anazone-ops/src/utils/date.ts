@@ -1,5 +1,6 @@
 const SHORT_FORMAT = new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric' });
 const LONG_FORMAT = new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+const TIME_FORMAT = new Intl.DateTimeFormat('en-CA', { hour: 'numeric', minute: '2-digit' });
 
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -35,4 +36,16 @@ export function addDays(iso: string, days: number): string {
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
+}
+
+export function formatTime(isoTimestamp: string): string {
+  return TIME_FORMAT.format(new Date(isoTimestamp));
+}
+
+export function formatTimestampShort(isoTimestamp: string): string {
+  const date = new Date(isoTimestamp);
+  if (startOfDay(date).getTime() === startOfDay(new Date()).getTime()) {
+    return TIME_FORMAT.format(date);
+  }
+  return SHORT_FORMAT.format(date);
 }
