@@ -147,20 +147,10 @@ export async function createDm(currentUserId: string, otherStaffId: string): Pro
   const existing = await findExistingDm(currentUserId, otherStaffId);
   if (existing) return { id: existing, error: null };
 
-  const { data: conversation, error } = await supabase
-    .from('conversations')
-    .insert({ type: 'dm', name: null })
-    .select()
-    .single();
-  if (error || !conversation) return { id: null, error: error?.message ?? 'Failed to create conversation' };
+  const { data, error } = await supabase.rpc('create_dm', { other_staff_id: otherStaffId });
+  if (error || !data) return { id: null, error: error?.message ?? 'Failed to create conversation' };
 
-  const { error: participantsError } = await supabase.from('conversation_participants').insert([
-    { conversation_id: conversation.id, staff_id: currentUserId },
-    { conversation_id: conversation.id, staff_id: otherStaffId },
-  ]);
-  if (participantsError) return { id: null, error: participantsError.message };
-
-  return { id: conversation.id, error: null };
+  return { id: data as string, error: null };
 }
 
 export async function createGroup(
@@ -168,18 +158,11 @@ export async function createGroup(
   name: string,
   participantIds: string[]
 ): Promise<{ id: string | null; error: string | null }> {
-  const { data: conversation, error } = await supabase
-    .from('conversations')
-    .insert({ type: 'group', name })
-    .select()
-    .single();
-  if (error || !conversation) return { id: null, error: error?.message ?? 'Failed to create conversation' };
+  const { data, error } = await supabase.rpc('create_group', {
+    group_name: name,
+    participant_ids: participantIds,
+  });
+  if (error || !data) return { id: null, error: error?.message ?? 'Failed to create conversation' };
 
-  const allParticipantIds = Array.from(new Set([currentUserId, ...participantIds]));
-  const { error: participantsError } = await supabase
-    .from('conversation_participants')
-    .insert(allParticipantIds.map((staff_id) => ({ conversation_id: conversation.id, staff_id })));
-  if (participantsError) return { id: null, error: participantsError.message };
-
-  return { id: conversation.id, error: null };
+  return { id: data as string, error: null };
 }
