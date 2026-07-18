@@ -75,14 +75,8 @@ export interface Milestone {
 export const STAFF_ROLES = ['Coach', 'Trainer', 'Front Desk', 'Manager', 'Cleaner'] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
-export interface Shift {
-  id: string;
-  staffName: string;
-  role: StaffRole;
-  date: string;
-  startTime: string;
-  endTime: string;
-}
+// Supabase-backed (Part 4 sync upgrade) — see the "Supabase-backed domain
+// types" section below for the shape that replaced the old local-only one.
 
 export const CHECKLIST_TYPES = ['opening', 'closing'] as const;
 export type DailyChecklistType = (typeof CHECKLIST_TYPES)[number];
@@ -117,14 +111,7 @@ export interface IncidentReport {
 
 export const FEED_POST_TYPES = ['announcement', 'handoff'] as const;
 export type FeedPostType = (typeof FEED_POST_TYPES)[number];
-
-export interface FeedPost {
-  id: string;
-  type: FeedPostType;
-  author: string;
-  message: string;
-  date: string;
-}
+// FeedPost itself is Supabase-backed (Part 4 sync upgrade) — see below.
 
 export const MAINTENANCE_STATUSES = ['open', 'in-progress', 'resolved'] as const;
 export type MaintenanceStatus = (typeof MAINTENANCE_STATUSES)[number];
@@ -190,7 +177,7 @@ export interface ConversationSummary {
   unread: boolean;
 }
 
-export interface SupabaseShift {
+export interface Shift {
   id: string;
   staff_id: string;
   role: StaffRole;
@@ -200,7 +187,7 @@ export interface SupabaseShift {
   created_at: string;
 }
 
-export interface SupabaseFeedPost {
+export interface FeedPost {
   id: string;
   type: FeedPostType;
   author_id: string;

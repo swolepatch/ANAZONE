@@ -7,11 +7,9 @@ import type {
   DailyTaskCompletion,
   DailyTaskTemplate,
   EquipmentItem,
-  FeedPost,
   IncidentReport,
   MaintenanceEntry,
   Milestone,
-  Shift,
 } from './types';
 
 export function seedChecklist(): ChecklistItem[] {
@@ -100,25 +98,7 @@ export function seedMilestones(): Milestone[] {
   return rows.map(([date, category, title]) => ({ id: generateId(), date, category, title }));
 }
 
-export function seedShifts(): Shift[] {
-  const today = todayIso();
-  const rows: Array<[string, Shift['role'], string, string, string]> = [
-    ['Jess Tremblay', 'Manager', today, '06:00', '14:00'],
-    ['Marc-André Bissonnette', 'Coach', today, '07:00', '15:00'],
-    ['Sofia Nguyen', 'Front Desk', today, '14:00', '22:00'],
-    ['Liam Fortin', 'Trainer', addDays(today, 1), '06:00', '14:00'],
-    ['Priya Chandra', 'Cleaner', addDays(today, 1), '05:00', '09:00'],
-    ['Jess Tremblay', 'Manager', addDays(today, 2), '06:00', '14:00'],
-  ];
-  return rows.map(([staffName, role, date, startTime, endTime]) => ({
-    id: generateId(),
-    staffName,
-    role,
-    date,
-    startTime,
-    endTime,
-  }));
-}
+// Shifts moved to Supabase in the Part 4 sync upgrade — see supabase/migrations.
 
 export function seedDailyTaskTemplates(): DailyTaskTemplate[] {
   const rows: Array<[DailyTaskTemplate['checklistType'], string, number]> = [
@@ -189,36 +169,7 @@ export function seedIncidents(): IncidentReport[] {
   }));
 }
 
-export function seedFeedPosts(): FeedPost[] {
-  const today = todayIso();
-  const rows: Array<[FeedPost['type'], string, string, string]> = [
-    [
-      'announcement',
-      'Jess Tremblay',
-      'New assault bikes arrive Thursday — please clear space near the cardio wall.',
-      addDays(today, -3),
-    ],
-    [
-      'handoff',
-      'Sofia Nguyen',
-      'Ran out of paper towels at the front desk, restock ordered for tomorrow.',
-      addDays(today, -1),
-    ],
-    [
-      'announcement',
-      'Jess Tremblay',
-      'Founding member pre-sale opens next week — expect extra tour requests.',
-      addDays(today, -1),
-    ],
-    [
-      'handoff',
-      'Marc-André Bissonnette',
-      'Torn cable on lat pulldown is flagged out of service, do not let members use it.',
-      today,
-    ],
-  ];
-  return rows.map(([type, author, message, date]) => ({ id: generateId(), type, author, message, date }));
-}
+// Team Feed moved to Supabase in the Part 4 sync upgrade — see supabase/migrations.
 
 export function seedMaintenance(): MaintenanceEntry[] {
   const today = todayIso();

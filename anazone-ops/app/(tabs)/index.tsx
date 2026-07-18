@@ -1,16 +1,18 @@
-import { useMemo } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { CategoryTag } from '@/components/CategoryTag';
 import { Card } from '@/components/Card';
 import { EmptyState } from '@/components/EmptyState';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import type { Shift } from '@/data/types';
+import { fetchShifts } from '@/lib/shifts';
 import { useBudgetStore } from '@/store/budgetStore';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useEquipmentStore } from '@/store/equipmentStore';
 import { useIncidentStore } from '@/store/incidentStore';
 import { useMilestoneStore } from '@/store/milestoneStore';
-import { useShiftStore } from '@/store/shiftStore';
 import { formatCurrency } from '@/utils/currency';
 import { daysUntil, formatDateLong, todayIso } from '@/utils/date';
 
@@ -27,8 +29,14 @@ export default function HomeScreen() {
   const equipmentItems = useEquipmentStore((s) => s.items);
   const budgetItems = useBudgetStore((s) => s.items);
   const milestoneItems = useMilestoneStore((s) => s.items);
-  const shiftItems = useShiftStore((s) => s.items);
   const incidentItems = useIncidentStore((s) => s.items);
+
+  const [shiftItems, setShiftItems] = useState<Shift[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchShifts().then(setShiftItems);
+    }, [])
+  );
 
   const completion = useMemo(() => {
     if (checklistItems.length === 0) return { done: 0, total: 0, pct: 0 };

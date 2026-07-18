@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Card } from '@/components/Card';
@@ -10,38 +11,63 @@ import { Fab } from '@/components/Fab';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { FEED_POST_TYPES, type FeedPostType } from '@/data/types';
-import { useFeedStore } from '@/store/feedStore';
-import { formatDateLong, todayIso } from '@/utils/date';
-import { generateId } from '@/utils/id';
+import { FEED_POST_TYPES, type FeedPost, type FeedPostType } from '@/data/types';
+import { addFeedPost, fetchFeedPosts, removeFeedPost } from '@/lib/feed';
+import { triggerNotification } from '@/lib/pushTrigger';
+import { useAuthStore } from '@/store/authStore';
+import { useStaffStore } from '@/store/staffStore';
+import { formatTimestampShort } from '@/utils/date';
 
 export default function FeedScreen() {
-  const items = useFeedStore((s) => s.items);
-  const addItem = useFeedStore((s) => s.addItem);
-  const removeItem = useFeedStore((s) => s.removeItem);
+  const profile = useAuthStore((s) => s.profile);
+  const staffById = useStaffStore((s) => s.staffById);
+  const fetchStaff = useStaffStore((s) => s.fetchStaff);
 
+  const [items, setItems] = useState<FeedPost[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [type, setType] = useState<FeedPostType>('announcement');
-  const [author, setAuthor] = useState('');
   const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const sorted = useMemo(
-    () => [...items].reverse().sort((a, b) => b.date.localeCompare(a.date)),
-    [items]
+  const load = useCallback(async () => {
+    setItems(await fetchFeedPosts());
+  }, []);
+
+  useEffect(() => {
+    fetchStaff();
+  }, [fetchStaff]);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
   );
-  const canSubmit = author.trim().length > 0 && message.trim().length > 0;
+
+  const canSubmit = message.trim().length > 0 && !submitting;
 
   function closeForm() {
     setFormOpen(false);
     setType('announcement');
-    setAuthor('');
     setMessage('');
   }
 
-  function submit() {
-    if (!canSubmit) return;
-    addItem({ id: generateId(), type, author: author.trim(), message: message.trim(), date: todayIso() });
+  async function submit() {
+    if (!canSubmit || !profile) return;
+    setSubmitting(true);
+    const trimmed = message.trim();
+    const { post, error } = await addFeedPost({ type, authorId: profile.id, message: trimmed });
+    setSubmitting(false);
+    if (error) return;
     closeForm();
+    load();
+    if (post && type === 'announcement') {
+      triggerNotification({ type: 'announcement', title: 'Team Announcement', body: trimmed, excludeStaffId: profile.id });
+    }
+  }
+
+  function authorName(authorId: string): string {
+    if (authorId === profile?.id) return 'You';
+    return staffById(authorId)?.name ?? 'Unknown';
   }
 
   return (
@@ -49,16 +75,16 @@ export default function FeedScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <ScreenHeader title="Team Feed" />
         <View className="px-5 gap-3">
-          {sorted.length === 0 && <EmptyState label="No posts yet." />}
-          {sorted.map((row) => (
+          {items.length === 0 && <EmptyState label="No posts yet." />}
+          {items.map((row) => (
             <Card key={row.id}>
               <View className="flex-row items-center justify-between mb-3">
                 <CategoryTag category={row.type} />
-                <DeleteButton onConfirm={() => removeItem(row.id)} confirmMessage="Delete this post?" />
+                <DeleteButton onConfirm={() => removeFeedPost(row.id).then(load)} confirmMessage="Delete this post?" />
               </View>
               <Text className="font-body text-ink text-[15px] mb-2">{row.message}</Text>
               <Text className="font-mono text-[10px] uppercase tracking-widest text-muted">
-                {row.author} · {formatDateLong(row.date)}
+                {authorName(row.author_id)} · {formatTimestampShort(row.created_at)}
               </Text>
             </Card>
           ))}
@@ -69,9 +95,8 @@ export default function FeedScreen() {
 
       <BottomSheet visible={formOpen} onClose={closeForm} title="New Post">
         <CategoryPicker options={FEED_POST_TYPES} value={type} onChange={setType} label="Type" />
-        <FormField label="Author" value={author} onChangeText={setAuthor} placeholder="e.g. Jess Tremblay" autoFocus />
-        <FormField label="Message" value={message} onChangeText={setMessage} placeholder="Write an update..." />
-        <PrimaryButton label="Post" onPress={submit} disabled={!canSubmit} />
+        <FormField label="Message" value={message} onChangeText={setMessage} placeholder="Write an update..." autoFocus />
+        <PrimaryButton label={submitting ? 'Posting…' : 'Post'} onPress={submit} disabled={!canSubmit} />
       </BottomSheet>
     </View>
   );
