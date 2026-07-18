@@ -71,6 +71,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => <TabIcon name="construct-outline" focused={focused} />,
         }}
       />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ focused }) => <TabIcon name="settings-outline" focused={focused} />,
+        }}
+      />
     </Tabs>
   );
 }
