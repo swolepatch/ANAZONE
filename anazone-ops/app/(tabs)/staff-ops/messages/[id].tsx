@@ -15,6 +15,7 @@ import {
   subscribeToConversation,
 } from '@/lib/messaging';
 import { supabase } from '@/lib/supabase';
+import { triggerNotification } from '@/lib/pushTrigger';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme/colors';
 import { formatTime } from '@/utils/date';
@@ -86,6 +87,13 @@ export default function ConversationThreadScreen() {
     }
     if (message) {
       setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
+      triggerNotification({
+        type: 'message',
+        title: profile.name,
+        body: trimmed,
+        excludeStaffId: profile.id,
+        conversationId: id,
+      });
     }
   }
 

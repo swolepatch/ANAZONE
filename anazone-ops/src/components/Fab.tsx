@@ -12,6 +12,8 @@ export function Fab({ onPress, bottomOffset = 24 }: FabProps) {
     <Pressable
       onPress={onPress}
       hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel="Add"
       className="absolute right-5 active:opacity-80"
       style={{
         bottom: bottomOffset,

@@ -11,6 +11,7 @@ import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { INCIDENT_SEVERITIES, type IncidentSeverity } from '@/data/types';
+import { triggerNotification } from '@/lib/pushTrigger';
 import { useAuthStore } from '@/store/authStore';
 import { useIncidentStore } from '@/store/incidentStore';
 import { useStaffStore } from '@/store/staffStore';
@@ -61,6 +62,7 @@ export default function IncidentsScreen() {
       date: todayIso(),
       resolved: false,
     });
+    triggerNotification({ type: 'incident', title: 'New Incident Report', body: title.trim() });
     closeForm();
   }
 
