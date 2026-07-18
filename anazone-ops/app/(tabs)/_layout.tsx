@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
 import { GradientPill } from '@/components/GradientPill';
+import { hapticLight } from '@/lib/haptics';
 import { colors } from '@/theme/colors';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -24,6 +25,9 @@ function TabIcon({ name, focused }: { name: IoniconName; focused: boolean }) {
 export default function TabsLayout() {
   return (
     <Tabs
+      screenListeners={{
+        tabPress: () => hapticLight(),
+      }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.ink,

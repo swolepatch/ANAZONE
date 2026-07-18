@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { AnimatedCheckbox } from '@/components/AnimatedCheckbox';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Card } from '@/components/Card';
 import { CategoryPicker } from '@/components/CategoryPicker';
@@ -11,8 +11,11 @@ import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { CHECKLIST_TYPES, type DailyChecklistType } from '@/data/types';
+import { hapticLight } from '@/lib/haptics';
+import { pressableScaleStyle } from '@/lib/pressableStyle';
 import { useDailyTaskCompletionStore } from '@/store/dailyTaskCompletionStore';
 import { useDailyTaskTemplateStore } from '@/store/dailyTaskTemplateStore';
+import { showToast } from '@/store/toastStore';
 import { colors } from '@/theme/colors';
 import { todayIso } from '@/utils/date';
 import { generateId } from '@/utils/id';
@@ -34,6 +37,7 @@ export default function ChecklistsScreen() {
   const [formOpen, setFormOpen] = useState(false);
   const [text, setText] = useState('');
   const [checklistType, setChecklistType] = useState<DailyChecklistType>('opening');
+  const [refreshing, setRefreshing] = useState(false);
 
   const today = todayIso();
 
@@ -49,7 +53,13 @@ export default function ChecklistsScreen() {
     return completion?.done ?? false;
   }
 
+  function onRefresh() {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 400);
+  }
+
   function toggleTask(taskId: string) {
+    hapticLight();
     const existing = completions.find((c) => c.taskId === taskId && c.date === today);
     if (existing) {
       updateCompletion(existing.id, { done: !existing.done });
@@ -70,11 +80,20 @@ export default function ChecklistsScreen() {
     const order = templates.filter((t) => t.checklistType === checklistType).length + 1;
     addTemplate({ id: generateId(), checklistType, text: trimmed, order });
     closeForm();
+    showToast('Task added');
+  }
+
+  function handleRemove(id: string) {
+    removeTemplate(id);
+    showToast('Task removed');
   }
 
   return (
     <View className="flex-1 bg-bg">
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.cyan} />}
+      >
         <ScreenHeader title="Checklists" />
         <View className="px-5 gap-5">
           {sections.map((section) => (
@@ -84,7 +103,15 @@ export default function ChecklistsScreen() {
                 {section.tasks.length}
               </Text>
               {section.tasks.length === 0 ? (
-                <EmptyState label={`No ${SECTION_LABEL[section.type].toLowerCase()} tasks yet.`} />
+                <EmptyState
+                  label={`No ${SECTION_LABEL[section.type].toLowerCase()} tasks yet.`}
+                  icon="clipboard-outline"
+                  ctaLabel="Add Task"
+                  onPressCta={() => {
+                    setChecklistType(section.type);
+                    setFormOpen(true);
+                  }}
+                />
               ) : (
                 <Card className="p-0 overflow-hidden">
                   {section.tasks.map((task, idx) => {
@@ -101,14 +128,11 @@ export default function ChecklistsScreen() {
                       >
                         <Pressable
                           onPress={() => toggleTask(task.id)}
+                          style={pressableScaleStyle()}
                           className="flex-row items-center flex-1 py-3"
                           hitSlop={4}
                         >
-                          <Ionicons
-                            name={done ? 'checkbox' : 'square-outline'}
-                            size={20}
-                            color={done ? colors.cyan : colors.muted}
-                          />
+                          <AnimatedCheckbox done={done} />
                           <Text
                             className="font-body text-ink text-[15px] ml-3 flex-1"
                             style={done ? { color: colors.muted, textDecorationLine: 'line-through' } : undefined}
@@ -117,7 +141,7 @@ export default function ChecklistsScreen() {
                           </Text>
                         </Pressable>
                         <DeleteButton
-                          onConfirm={() => removeTemplate(task.id)}
+                          onConfirm={() => handleRemove(task.id)}
                           confirmMessage="Remove this checklist task?"
                         />
                       </View>

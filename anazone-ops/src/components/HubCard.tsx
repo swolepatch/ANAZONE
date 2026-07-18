@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, Text, View } from 'react-native';
+import { pressableScaleStyle } from '@/lib/pressableStyle';
 import { colors } from '@/theme/colors';
 import { Card } from './Card';
 
@@ -14,7 +15,7 @@ interface HubCardProps {
 
 export function HubCard({ icon, title, subtitle, onPress }: HubCardProps) {
   return (
-    <Pressable onPress={onPress} className="active:opacity-70">
+    <Pressable onPress={onPress} style={pressableScaleStyle()}>
       <Card>
         <View className="flex-row items-center" style={{ minHeight: 44 }}>
           <View

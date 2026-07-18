@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Card } from '@/components/Card';
 import { CategoryPicker } from '@/components/CategoryPicker';
@@ -10,8 +10,13 @@ import { Fab } from '@/components/Fab';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { SwipeableRow } from '@/components/SwipeableRow';
 import { CLEANING_FREQUENCIES, type CleaningFrequency } from '@/data/types';
+import { hapticLight } from '@/lib/haptics';
+import { pressableScaleStyle } from '@/lib/pressableStyle';
 import { useCleaningStore } from '@/store/cleaningStore';
+import { showToast } from '@/store/toastStore';
+import { colors } from '@/theme/colors';
 import { formatDateLong, todayIso } from '@/utils/date';
 import { generateId } from '@/utils/id';
 
@@ -25,6 +30,7 @@ export default function CleaningScreen() {
   const [area, setArea] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
   const [frequency, setFrequency] = useState<CleaningFrequency>('daily');
+  const [refreshing, setRefreshing] = useState(false);
 
   const sections = useMemo(() => {
     return CLEANING_FREQUENCIES.map((freq) => ({
@@ -34,6 +40,11 @@ export default function CleaningScreen() {
   }, [items]);
 
   const canSubmit = area.trim().length > 0 && assignedTo.trim().length > 0;
+
+  function onRefresh() {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 400);
+  }
 
   function closeForm() {
     setFormOpen(false);
@@ -46,14 +57,36 @@ export default function CleaningScreen() {
     if (!canSubmit) return;
     addItem({ id: generateId(), area: area.trim(), frequency, assignedTo: assignedTo.trim(), lastCompleted: null });
     closeForm();
+    showToast('Cleaning task added');
+  }
+
+  function handleRemove(id: string) {
+    removeItem(id);
+    showToast('Cleaning task deleted');
+  }
+
+  function markDone(id: string) {
+    hapticLight();
+    updateItem(id, { lastCompleted: todayIso() });
+    showToast('Marked done');
   }
 
   return (
     <View className="flex-1 bg-bg">
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.cyan} />}
+      >
         <ScreenHeader title="Cleaning Schedule" />
         <View className="px-5 gap-5">
-          {items.length === 0 && <EmptyState label="No cleaning areas yet." />}
+          {items.length === 0 && (
+            <EmptyState
+              label="No cleaning areas yet."
+              icon="sparkles-outline"
+              ctaLabel="Add Area"
+              onPressCta={() => setFormOpen(true)}
+            />
+          )}
           {sections.map(
             (section) =>
               section.tasks.length > 0 && (
@@ -63,22 +96,24 @@ export default function CleaningScreen() {
                   </Text>
                   <View className="gap-3">
                     {section.tasks.map((row) => (
-                      <Card key={row.id}>
-                        <View className="flex-row items-center justify-between mb-3">
-                          <CategoryTag category={row.frequency} />
-                          <DeleteButton
-                            onConfirm={() => removeItem(row.id)}
-                            confirmMessage="Delete this cleaning task?"
-                          />
-                        </View>
-                        <Pressable onPress={() => updateItem(row.id, { lastCompleted: todayIso() })}>
-                          <Text className="font-heading text-ink text-base mb-1">{row.area}</Text>
-                          <Text className="font-body text-muted text-sm mb-2">{row.assignedTo}</Text>
-                          <Text className="font-mono text-[10px] uppercase tracking-widest text-muted">
-                            {row.lastCompleted ? `Last done ${formatDateLong(row.lastCompleted)}` : 'Never completed'}
-                          </Text>
-                        </Pressable>
-                      </Card>
+                      <SwipeableRow key={row.id} onConfirm={() => handleRemove(row.id)} confirmMessage="Delete this cleaning task?">
+                        <Card>
+                          <View className="flex-row items-center justify-between mb-3">
+                            <CategoryTag category={row.frequency} />
+                            <DeleteButton
+                              onConfirm={() => handleRemove(row.id)}
+                              confirmMessage="Delete this cleaning task?"
+                            />
+                          </View>
+                          <Pressable onPress={() => markDone(row.id)} style={pressableScaleStyle()}>
+                            <Text className="font-heading text-ink text-base mb-1">{row.area}</Text>
+                            <Text className="font-body text-muted text-sm mb-2">{row.assignedTo}</Text>
+                            <Text className="font-mono text-[10px] uppercase tracking-widest text-muted">
+                              {row.lastCompleted ? `Last done ${formatDateLong(row.lastCompleted)}` : 'Never completed'}
+                            </Text>
+                          </Pressable>
+                        </Card>
+                      </SwipeableRow>
                     ))}
                   </View>
                 </View>

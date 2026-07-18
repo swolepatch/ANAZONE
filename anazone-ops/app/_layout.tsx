@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Toast } from '@/components/Toast';
 import { addNotificationTapListener, registerForPushNotifications } from '@/lib/notifications';
 import { useAuthStore } from '@/store/authStore';
 import { useAppHydrated } from '@/store/useAppHydrated';
@@ -67,7 +68,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaProvider>
         <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: 'fade' }}>
           <Stack.Protected guard={!!session}>
             <Stack.Screen name="(tabs)" />
           </Stack.Protected>
@@ -75,6 +76,7 @@ export default function RootLayout() {
             <Stack.Screen name="(auth)" />
           </Stack.Protected>
         </Stack>
+        <Toast />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

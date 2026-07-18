@@ -15,6 +15,7 @@ import {
   subscribeToConversation,
 } from '@/lib/messaging';
 import { supabase } from '@/lib/supabase';
+import { hapticLight } from '@/lib/haptics';
 import { triggerNotification } from '@/lib/pushTrigger';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme/colors';
@@ -77,6 +78,7 @@ export default function ConversationThreadScreen() {
   async function submit() {
     const trimmed = text.trim();
     if (!id || !profile || trimmed.length === 0) return;
+    hapticLight();
     setText('');
     setSending(true);
     const { message, error } = await sendMessage(id, profile.id, trimmed);

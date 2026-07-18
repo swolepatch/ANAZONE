@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Card } from '@/components/Card';
@@ -10,10 +10,13 @@ import { Fab } from '@/components/Fab';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { SkeletonList } from '@/components/Skeleton';
 import type { ConversationSummary } from '@/data/types';
 import { createDm, createGroup, fetchConversations } from '@/lib/messaging';
+import { pressableScaleStyle } from '@/lib/pressableStyle';
 import { useAuthStore } from '@/store/authStore';
 import { useStaffStore } from '@/store/staffStore';
+import { showToast } from '@/store/toastStore';
 import { colors } from '@/theme/colors';
 import { formatTimestampShort } from '@/utils/date';
 
@@ -28,6 +31,7 @@ export default function MessagesScreen() {
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [mode, setMode] = useState<ConversationMode>('dm');
@@ -53,6 +57,11 @@ export default function MessagesScreen() {
       load();
     }, [load])
   );
+
+  function onRefresh() {
+    setRefreshing(true);
+    load().finally(() => setRefreshing(false));
+  }
 
   function closeForm() {
     setFormOpen(false);
@@ -89,6 +98,7 @@ export default function MessagesScreen() {
       return;
     }
     closeForm();
+    showToast('Group created');
     router.push(`/staff-ops/messages/${id}`);
   }
 
@@ -96,49 +106,67 @@ export default function MessagesScreen() {
 
   return (
     <View className="flex-1 bg-bg">
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.cyan} />}
+      >
         <ScreenHeader title="Messages" />
         <View className="px-5 gap-3">
-          {!loading && conversations.length === 0 && (
-            <EmptyState label="No conversations yet. Start one with the + button." />
+          {loading ? (
+            <SkeletonList />
+          ) : (
+            <>
+              {conversations.length === 0 && (
+                <EmptyState
+                  label="No conversations yet. Start one with the + button."
+                  icon="chatbox-ellipses-outline"
+                />
+              )}
+              {conversations.map((row) => {
+                const title = row.type === 'group' ? (row.name ?? 'Team Chat') : (row.otherParticipant?.name ?? 'Unknown');
+                const avatarName = row.type === 'group' ? title : (row.otherParticipant?.name ?? '?');
+                const previewSender =
+                  row.lastMessage?.sender_id === profile?.id
+                    ? 'You: '
+                    : row.type === 'group' && row.lastMessage
+                      ? ''
+                      : '';
+                return (
+                  <Pressable
+                    key={row.id}
+                    onPress={() => router.push(`/staff-ops/messages/${row.id}`)}
+                    style={pressableScaleStyle()}
+                  >
+                    <Card>
+                      <View className="flex-row items-center">
+                        <Avatar name={avatarName} avatarUrl={row.type === 'dm' ? row.otherParticipant?.avatar_url : null} />
+                        <View className="flex-1 ml-3">
+                          <View className="flex-row items-center justify-between mb-1">
+                            <Text className="font-heading text-ink text-base" numberOfLines={1}>
+                              {title}
+                            </Text>
+                            {row.lastMessage && (
+                              <Text className="font-mono text-[10px] uppercase tracking-widest text-muted">
+                                {formatTimestampShort(row.lastMessage.created_at)}
+                              </Text>
+                            )}
+                          </View>
+                          <View className="flex-row items-center justify-between">
+                            <Text className="font-body text-muted text-sm flex-1 mr-2" numberOfLines={1}>
+                              {row.lastMessage ? `${previewSender}${row.lastMessage.text}` : 'No messages yet'}
+                            </Text>
+                            {row.unread && (
+                              <View className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors.cyan }} />
+                            )}
+                          </View>
+                        </View>
+                      </View>
+                    </Card>
+                  </Pressable>
+                );
+              })}
+            </>
           )}
-          {conversations.map((row) => {
-            const title = row.type === 'group' ? row.name ?? 'Team Chat' : row.otherParticipant?.name ?? 'Unknown';
-            const avatarName = row.type === 'group' ? title : row.otherParticipant?.name ?? '?';
-            const previewSender =
-              row.lastMessage?.sender_id === profile?.id
-                ? 'You: '
-                : row.type === 'group' && row.lastMessage
-                  ? ''
-                  : '';
-            return (
-              <Pressable key={row.id} onPress={() => router.push(`/staff-ops/messages/${row.id}`)}>
-                <Card>
-                  <View className="flex-row items-center">
-                    <Avatar name={avatarName} avatarUrl={row.type === 'dm' ? row.otherParticipant?.avatar_url : null} />
-                    <View className="flex-1 ml-3">
-                      <View className="flex-row items-center justify-between mb-1">
-                        <Text className="font-heading text-ink text-base" numberOfLines={1}>
-                          {title}
-                        </Text>
-                        {row.lastMessage && (
-                          <Text className="font-mono text-[10px] uppercase tracking-widest text-muted">
-                            {formatTimestampShort(row.lastMessage.created_at)}
-                          </Text>
-                        )}
-                      </View>
-                      <View className="flex-row items-center justify-between">
-                        <Text className="font-body text-muted text-sm flex-1 mr-2" numberOfLines={1}>
-                          {row.lastMessage ? `${previewSender}${row.lastMessage.text}` : 'No messages yet'}
-                        </Text>
-                        {row.unread && <View className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors.cyan }} />}
-                      </View>
-                    </View>
-                  </View>
-                </Card>
-              </Pressable>
-            );
-          })}
         </View>
       </ScrollView>
 

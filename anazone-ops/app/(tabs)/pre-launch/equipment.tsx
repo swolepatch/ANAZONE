@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Card } from '@/components/Card';
 import { CategoryPicker } from '@/components/CategoryPicker';
@@ -10,9 +10,12 @@ import { Fab } from '@/components/Fab';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { SwipeableRow } from '@/components/SwipeableRow';
 import { TotalFooter } from '@/components/TotalFooter';
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from '@/data/types';
 import { useEquipmentStore } from '@/store/equipmentStore';
+import { showToast } from '@/store/toastStore';
+import { colors } from '@/theme/colors';
 import { formatCurrency } from '@/utils/currency';
 import { generateId } from '@/utils/id';
 
@@ -26,10 +29,16 @@ export default function EquipmentScreen() {
   const [item, setItem] = useState('');
   const [vendor, setVendor] = useState('');
   const [price, setPrice] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const total = useMemo(() => items.reduce((sum, i) => sum + i.price, 0), [items]);
   const priceValue = parseFloat(price);
   const canSubmit = item.trim().length > 0 && vendor.trim().length > 0 && !Number.isNaN(priceValue) && priceValue > 0;
+
+  function onRefresh() {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 400);
+  }
 
   function closeForm() {
     setFormOpen(false);
@@ -43,28 +52,46 @@ export default function EquipmentScreen() {
     if (!canSubmit) return;
     addItem({ id: generateId(), category, item: item.trim(), vendor: vendor.trim(), price: priceValue });
     closeForm();
+    showToast('Equipment added');
+  }
+
+  function handleRemove(id: string) {
+    removeItem(id);
+    showToast('Equipment deleted');
   }
 
   return (
     <View className="flex-1 bg-bg">
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 24 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.cyan} />}
+      >
         <ScreenHeader title="Equipment" />
         <View className="px-5 gap-3">
-          {items.length === 0 && <EmptyState label="No equipment logged yet." />}
+          {items.length === 0 && (
+            <EmptyState
+              label="No equipment logged yet."
+              icon="barbell-outline"
+              ctaLabel="Add Equipment"
+              onPressCta={() => setFormOpen(true)}
+            />
+          )}
           {items.map((row) => (
-            <Card key={row.id}>
-              <View className="flex-row items-center justify-between mb-3">
-                <CategoryTag category={row.category} />
-                <DeleteButton onConfirm={() => removeItem(row.id)} confirmMessage="Delete this equipment entry?" />
-              </View>
-              <View className="flex-row items-start justify-between">
-                <View className="flex-1 pr-3">
-                  <Text className="font-heading text-ink text-base mb-1">{row.item}</Text>
-                  <Text className="font-body text-muted text-sm">{row.vendor}</Text>
+            <SwipeableRow key={row.id} onConfirm={() => handleRemove(row.id)} confirmMessage="Delete this equipment entry?">
+              <Card>
+                <View className="flex-row items-center justify-between mb-3">
+                  <CategoryTag category={row.category} />
+                  <DeleteButton onConfirm={() => handleRemove(row.id)} confirmMessage="Delete this equipment entry?" />
                 </View>
-                <Text className="font-mono-semibold text-ink text-sm">{formatCurrency(row.price)}</Text>
-              </View>
-            </Card>
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-1 pr-3">
+                    <Text className="font-heading text-ink text-base mb-1">{row.item}</Text>
+                    <Text className="font-body text-muted text-sm">{row.vendor}</Text>
+                  </View>
+                  <Text className="font-mono-semibold text-ink text-sm">{formatCurrency(row.price)}</Text>
+                </View>
+              </Card>
+            </SwipeableRow>
           ))}
         </View>
       </ScrollView>

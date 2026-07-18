@@ -8,6 +8,7 @@ import { ProgressBar } from '@/components/ProgressBar';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import type { Shift } from '@/data/types';
 import { fetchShifts } from '@/lib/shifts';
+import { useCountUp } from '@/lib/useCountUp';
 import { useBudgetStore } from '@/store/budgetStore';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useEquipmentStore } from '@/store/equipmentStore';
@@ -67,6 +68,12 @@ export default function HomeScreen() {
     [incidentItems]
   );
 
+  const animatedProgress = useCountUp(completion.pct);
+  const animatedShiftCount = useCountUp(todaysShiftCount);
+  const animatedIncidentCount = useCountUp(openIncidentCount);
+  const animatedEquipmentCost = useCountUp(totalEquipmentCost);
+  const animatedBudget = useCountUp(totalBudget);
+
   return (
     <View className="flex-1 bg-bg">
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
@@ -77,12 +84,12 @@ export default function HomeScreen() {
               Startup Checklist
             </Text>
             <View className="flex-row items-end justify-between mb-3">
-              <Text className="font-heading text-ink text-4xl">{Math.round(completion.pct * 100)}%</Text>
+              <Text className="font-heading text-ink text-4xl">{Math.round(animatedProgress * 100)}%</Text>
               <Text className="font-body text-muted text-sm mb-1">
                 {completion.done}/{completion.total} tasks
               </Text>
             </View>
-            <ProgressBar progress={completion.pct} />
+            <ProgressBar progress={animatedProgress} />
           </Card>
 
           <Card>
@@ -110,13 +117,13 @@ export default function HomeScreen() {
               <Text className="font-mono text-[10px] uppercase tracking-widest text-muted mb-3">
                 Today's Shifts
               </Text>
-              <Text className="font-heading text-ink text-2xl">{todaysShiftCount}</Text>
+              <Text className="font-heading text-ink text-2xl">{Math.round(animatedShiftCount)}</Text>
             </Card>
             <Card className="flex-1">
               <Text className="font-mono text-[10px] uppercase tracking-widest text-muted mb-3">
                 Open Incidents
               </Text>
-              <Text className="font-heading text-ink text-2xl">{openIncidentCount}</Text>
+              <Text className="font-heading text-ink text-2xl">{Math.round(animatedIncidentCount)}</Text>
             </Card>
           </View>
 
@@ -125,13 +132,13 @@ export default function HomeScreen() {
               <Text className="font-mono text-[10px] uppercase tracking-widest text-muted mb-3">
                 Equipment Cost
               </Text>
-              <Text className="font-heading text-ink text-2xl">{formatCurrency(totalEquipmentCost)}</Text>
+              <Text className="font-heading text-ink text-2xl">{formatCurrency(animatedEquipmentCost)}</Text>
             </Card>
             <Card className="flex-1">
               <Text className="font-mono text-[10px] uppercase tracking-widest text-muted mb-3">
                 Total Budget
               </Text>
-              <Text className="font-heading text-ink text-2xl">{formatCurrency(totalBudget)}</Text>
+              <Text className="font-heading text-ink text-2xl">{formatCurrency(animatedBudget)}</Text>
             </Card>
           </View>
         </View>
